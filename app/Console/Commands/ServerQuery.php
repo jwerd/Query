@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Jobs\QueryJob;
 use Illuminate\Console\Command;
 
 class ServerQuery extends Command
@@ -37,11 +38,11 @@ class ServerQuery extends Command
      */
     public function handle()
     {
-        \DB::table('tbl_server')->orderBy('id')->chunk(100, function ($servers) {
-            dd($servers);
+        \DB::table('tbl_server')->orderBy('current_player_count', 'DESC')->chunk(100, function ($servers) {
             foreach ($servers as $server) {
-
+                dispatch(new QueryJob($server->address, $server->realgameport, $server->gameport));
             }
+            exit;
         });
     }
 }
