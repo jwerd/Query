@@ -14,6 +14,7 @@ class QueryJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    protected $server_id;
     protected $timeout = 1;
     protected $engine  = SourceQuery::SOURCE;
     protected $address;
@@ -24,8 +25,9 @@ class QueryJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($address, $port, $secondaryport)
+    public function __construct($id, $address, $port, $secondaryport)
     {
+        $this->server_id     = $id;
         $this->address       = $address;
         $this->port          = $port;
         $this->secondaryport = $secondaryport;
@@ -44,11 +46,12 @@ class QueryJob implements ShouldQueue
             $query->Connect($this->address, $this->port, $this->timeout, $this->engine);
             if($info = $query->GetInfo()) {
                 echo "Updating ".$info['HostName'].PHP_EOL;
-                $server = new Server;
+                $server = Server::find($this->server_id);
                 $server->current_player_count = $info['Players'];
                 $server->max_player_count     = $info['MaxPlayers'];
                 $server->last_checked         = time();
                 $server->save();
+                dd($server);
             }
         }
         catch(\Exception $e)

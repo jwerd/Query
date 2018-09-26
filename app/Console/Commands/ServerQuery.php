@@ -40,9 +40,9 @@ class ServerQuery extends Command
     {
         \DB::table('tbl_server')->orderBy('current_player_count', 'DESC')->chunk(100, function ($servers) {
             foreach ($servers as $server) {
-                dispatch(new QueryJob($server->address, $server->realgameport, $server->gameport));
+                dispatch(new QueryJob($server->id, $server->address, $server->realgameport, $server->gameport));
+                exit;
             }
-            exit;
         });
     }
 }
