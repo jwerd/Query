@@ -86,12 +86,9 @@ return [
                 'connection' => 'redis',
                 'queue' => ['default'],
                 'balance' => 'simple',
-                'processes' => 15,
+                'processes' => 30,
                 'tries' => 3,
                 'sleep' => 60,
-                'waits' => [
-                    'redis:default' => 60,
-                ],
             ],
         ],
     ],

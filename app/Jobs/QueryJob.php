@@ -8,16 +8,18 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use xPaw\SourceQuery\SourceQuery;
-use App\Models\Server;
 
 class QueryJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    public $timeout = 300; // 5 minute timeout
+
     protected $servers;
+    protected $server;
     protected $server_id;
-    protected $timeout = 1;
-    protected $engine  = SourceQuery::SOURCE;
+    protected $sq_timeout = 1;
+    protected $sq_engine  = SourceQuery::SOURCE;
     protected $address;
     protected $port;
     protected $secondaryport;
@@ -44,18 +46,19 @@ class QueryJob implements ShouldQueue
     {
         $query = new SourceQuery();
         $updates = [];
+        \DB::beginTransaction();
         foreach($this->servers as $server) {
             //dd($server);
             try {
-                $query->Connect($server->address, $server->gameport, $this->timeout, $this->engine);
+                $query->Connect($server->address, $server->gameport, $this->sq_timeout, $this->sq_engine);
                 if($info = $query->GetInfo()) {
-                    echo "Updating ".$info['HostName'].PHP_EOL;
-                    $updates[] = [
-                        'id'                   => $server->id,
+//                    echo "Updating ".$info['HostName'].PHP_EOL;
+
+                    \DB::table('tbl_server')->where('id', $server->id)->update([
                         'current_player_count' => $info['Players'],
                         'max_player_count'     => $info['MaxPlayers'],
                         'last_checked'         => time(),
-                    ];
+                    ]);
                 }
             }
             catch(\Exception $e)
@@ -64,6 +67,6 @@ class QueryJob implements ShouldQueue
             }
             $query->Disconnect();
         }
-        dd($updates);
+        \DB::commit();
     }
 }

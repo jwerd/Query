@@ -38,8 +38,6 @@ services:
      - digi
   redis:
     image: redis:alpine
-    volumes:
-     - digiredis:/data
     networks:
      - digi
 networks:
@@ -47,6 +45,4 @@ networks:
     driver: "bridge"
 volumes:
   digimysql:
-    driver: "local"
-  digiredis:
     driver: "local"

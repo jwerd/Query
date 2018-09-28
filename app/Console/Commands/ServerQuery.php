@@ -38,12 +38,11 @@ class ServerQuery extends Command
      */
     public function handle()
     {
-        \DB::table('tbl_server')->where('downcount', '<', $this->downcount_thresholdhold)->orderBy('current_player_count', 'DESC')->chunk(100, function ($servers) {
-            dispatch(new QueryJob($servers));
-            exit;
-            foreach ($servers as $server) {
-                //dispatch(new QueryJob($server->id, $server->address, $server->realgameport, $server->gameport));
-            }
+        \DB::table('tbl_server')->where('downcount', '<', $this->downcount_thresholdhold)->orderBy('current_player_count', 'DESC')->chunk(50, function ($servers) {
+        //\DB::table('tbl_server')->orderBy('current_player_count', 'DESC')->chunk(50, function ($servers) {
+            //foreach($servers as $server) {
+                dispatch(new QueryJob($servers));
+            //}
         });
     }
 }

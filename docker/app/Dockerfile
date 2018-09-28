@@ -51,4 +51,5 @@ COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY start-container /usr/local/bin/start-container
 RUN chmod +x /usr/local/bin/start-container
 COPY crontab.conf /var/spool/cron/crontabs/root
+RUN service cron start
 ENTRYPOINT ["start-container"]
