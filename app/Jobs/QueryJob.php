@@ -14,6 +14,7 @@ class QueryJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
+    protected $servers;
     protected $server_id;
     protected $timeout = 1;
     protected $engine  = SourceQuery::SOURCE;
@@ -25,12 +26,13 @@ class QueryJob implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($id, $address, $port, $secondaryport)
+    public function __construct($servers)
     {
-        $this->server_id     = $id;
-        $this->address       = $address;
-        $this->port          = $port;
-        $this->secondaryport = $secondaryport;
+        $this->servers = $servers;
+//        $this->server_id     = $id;
+//        $this->address       = $address;
+//        $this->port          = $port;
+//        $this->secondaryport = $secondaryport;
     }
 
     /**
@@ -41,24 +43,27 @@ class QueryJob implements ShouldQueue
     public function handle()
     {
         $query = new SourceQuery();
-
-        try {
-            $query->Connect($this->address, $this->port, $this->timeout, $this->engine);
-            if($info = $query->GetInfo()) {
-                echo "Updating ".$info['HostName'].PHP_EOL;
-                $server = Server::find($this->server_id);
-                $server->current_player_count = $info['Players'];
-                $server->max_player_count     = $info['MaxPlayers'];
-                $server->last_checked         = time();
-                $server->save();
-                dd($server);
+        $updates = [];
+        foreach($this->servers as $server) {
+            //dd($server);
+            try {
+                $query->Connect($server->address, $server->gameport, $this->timeout, $this->engine);
+                if($info = $query->GetInfo()) {
+                    echo "Updating ".$info['HostName'].PHP_EOL;
+                    $updates[] = [
+                        'id'                   => $server->id,
+                        'current_player_count' => $info['Players'],
+                        'max_player_count'     => $info['MaxPlayers'],
+                        'last_checked'         => time(),
+                    ];
+                }
             }
+            catch(\Exception $e)
+            {
+                echo $e->getMessage();
+            }
+            $query->Disconnect();
         }
-        catch(\Exception $e)
-        {
-            echo $e->getMessage();
-        }
-
-        $query->Disconnect();
+        dd($updates);
     }
 }

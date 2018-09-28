@@ -20,7 +20,7 @@ class ServerQuery extends Command
      * @var string
      */
     protected $description = 'Queries all servers within our server model';
-
+    protected $downcount_thresholdhold = 10000;
     /**
      * Create a new command instance.
      *
@@ -38,10 +38,11 @@ class ServerQuery extends Command
      */
     public function handle()
     {
-        \DB::table('tbl_server')->orderBy('current_player_count', 'DESC')->chunk(100, function ($servers) {
+        \DB::table('tbl_server')->where('downcount', '<', $this->downcount_thresholdhold)->orderBy('current_player_count', 'DESC')->chunk(100, function ($servers) {
+            dispatch(new QueryJob($servers));
+            exit;
             foreach ($servers as $server) {
-                dispatch(new QueryJob($server->id, $server->address, $server->realgameport, $server->gameport));
-                exit;
+                //dispatch(new QueryJob($server->id, $server->address, $server->realgameport, $server->gameport));
             }
         });
     }
